@@ -5,7 +5,7 @@ class Board:
         self.width = width
         self.height = height
         self.snake = snake
-        self.green_apples = []  # sera initialisé dans Game
+        self.green_apples = []
         self.red_apple = None
 
     def random_empty_cell(self, snake_segments, other_apples=[]):
