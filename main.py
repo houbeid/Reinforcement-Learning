@@ -153,10 +153,22 @@ def main():
             print(f"Episode {episode} | reward={total_reward:.1f} | steps={steps} | len={len(game.snake.segments)}")
 
         if args.save and episode in [1, 10, 100, 1000, 5000]:
-            os.makedirs(args.save, exist_ok=True)
-            path = os.path.join(args.save, f"{episode}sess.txt")
+    
+            # Si args.save finit par .txt → fichier direct
+            if args.save.endswith(".txt"):
+                folder = os.path.dirname(args.save)
+                if folder:
+                    os.makedirs(folder, exist_ok=True)
+                path = args.save
+
+            # Sinon → dossier
+            else:
+                os.makedirs(args.save, exist_ok=True)
+                path = os.path.join(args.save, f"{episode}sess.txt")
+
             with open(path, "wb") as f:
                 pickle.dump(Q, f)
+
             print("Saved:", path)
 
     print("\nGame over")
