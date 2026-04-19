@@ -36,6 +36,7 @@ class Snake:
     def grow(self):
         self.segments.append(self.segments[-1])
 
+
     def shrink(self):
         if len(self.segments) > 1:
             self.segments.pop()
@@ -94,8 +95,6 @@ class Snake:
             state.append(1 if gy > head_y else 0)  # pomme verte en bas
         else:
             state.extend([0, 0, 0, 0])
-
-        # Position de la pomme rouge
         apple_x, apple_y = board.red_apple.position
         state.append(1 if apple_x < head_x else 0)  # pomme rouge à gauche
         state.append(1 if apple_x > head_x else 0)  # pomme rouge à droite

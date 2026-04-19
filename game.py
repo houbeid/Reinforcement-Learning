@@ -22,8 +22,8 @@ class Game:
         )
 
         self.prev_distance     = None
-        self.visited_positions = []   # historique des positions de la tête
-        self.loop_penalty      = 0    # pénalité cumulative de boucle
+        self.visited_positions = []
+        self.loop_penalty      = 0
 
     def reset(self):
         """Réinitialise le jeu pour un nouvel épisode."""
@@ -34,7 +34,6 @@ class Game:
         green_positions = [g.position for g in self.board.green_apples]
         red_position    = self.board.red_apple.position
 
-        # Distance à la pomme verte la plus proche
         if green_positions:
             closest_green = min(
                 green_positions,
@@ -47,9 +46,7 @@ class Game:
         dist_before        = self.prev_distance
         self.prev_distance = dist_after
 
-        # ---- Récompenses principales ----
         if head in green_positions:
-            # Manger une pomme verte → reset de l'historique de boucle
             self.visited_positions = []
             self.loop_penalty      = 0
             reward = 10
@@ -58,21 +55,16 @@ class Game:
             reward = -5
 
         else:
-            # +2 si on se rapproche de la pomme verte, -2 si on s'éloigne
             if dist_before is not None and dist_after is not None:
                 reward = 2 if dist_after < dist_before else -2
             else:
                 reward = -2
 
-        # ---- Pénalité de boucle ----
-        # Vérifier si la tête était déjà dans les 20 dernières positions
-        # AVANT d'ajouter la position actuelle → évite le faux positif
         if head in self.visited_positions[-20:]:
             self.loop_penalty -= 1
         else:
             self.loop_penalty = 0
 
-        # Enregistrer la position APRÈS la vérification
         self.visited_positions.append(head)
 
         reward += self.loop_penalty
@@ -84,12 +76,8 @@ class Game:
             self.snake.update_direction(action_direction)
 
         self.snake.move()
-
-        # Collision mur ou corps → fin d'épisode
         if self.snake.head_collision(self.board):
             return self.snake.get_state(self.board), -10, True
-
-        # Manger une pomme verte → grandir + respawn
         for green in self.board.green_apples:
             if self.snake.head_position() == green.position:
                 self.snake.grow()
@@ -98,8 +86,6 @@ class Game:
                     + [self.board.red_apple.position]
                 )
                 green.respawn(self.snake.segments, other_apples=other)
-
-        # Manger la pomme rouge → rétrécir ou fin d'épisode
         if self.snake.head_position() == self.board.red_apple.position:
             if len(self.snake.segments) > 1:
                 self.snake.shrink()
