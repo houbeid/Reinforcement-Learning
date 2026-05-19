@@ -15,19 +15,27 @@ def main():
     parser.add_argument("-save", type=str, default=None)
     parser.add_argument("-sessions", type=int, default=None)
     parser.add_argument("-dontlearn", action="store_true")
-    parser.add_argument("-step-by-step", action="store_true", dest="step_by_step")
+    parser.add_argument(
+        "-step-by-step", action="store_true", dest="step_by_step"
+    )
 
     args = parser.parse_args()
 
     MODE = "non-learning" if (args.load or args.dontlearn) else "learning"
     RENDER = args.visual == "on"
 
-    TOTAL_EPISODES = args.sessions if args.sessions else (30 if MODE == "non-learning" else 10000)
+    if args.sessions:
+        TOTAL_EPISODES = args.sessions
+    else:
+        TOTAL_EPISODES = 30 if MODE == "non-learning" else 10000
+
     cell_size = 40
     board_size = 10
 
     pygame.init()
-    screen = pygame.display.set_mode((cell_size * board_size, cell_size * board_size))
+    screen = pygame.display.set_mode(
+        (cell_size * board_size, cell_size * board_size)
+    )
     pygame.display.set_caption("Learn2Slither RL")
     clock = pygame.time.Clock()
 
@@ -38,7 +46,6 @@ def main():
     epsilon_min = 0.01
     MAX_STEPS = 500
 
-
     game = Game(board_size)
     Q = {}
 
@@ -47,7 +54,6 @@ def main():
     max_duration = 0
 
     actions = ["UP", "DOWN", "LEFT", "RIGHT"]
-
 
     if args.load:
         if os.path.exists(args.load):
@@ -59,10 +65,7 @@ def main():
             print("Model not found")
             return
 
-
     def choose_action(state):
-        nonlocal epsilon
-
         if MODE == "learning" and random.random() < epsilon:
             return random.choice(actions)
 
@@ -81,7 +84,6 @@ def main():
         td_error = td_target - Q[state][action]
         Q[state][action] += alpha * td_error
 
-
     for episode in range(TOTAL_EPISODES):
 
         game.reset()
@@ -94,7 +96,18 @@ def main():
         while not done and steps < MAX_STEPS:
             steps += 1
 
+            if args.step_by_step:
+                print("\n" + "=" * 30)
+                print(f"Session {episode + 1} - Step {steps}")
+                print("=" * 30)
+                print(game.snake.get_vision_string(game.board))
+                print()
+
             action = choose_action(state)
+
+            if args.step_by_step:
+                print(f"Action chosen: {action}\n")
+
             next_state, reward, done = game.step(action)
 
             total_reward += reward
@@ -104,23 +117,31 @@ def main():
 
             state = next_state
 
-
             if RENDER:
                 screen.fill((0, 0, 0))
 
                 for x, y in game.snake.segments:
-                    pygame.draw.rect(screen, (0, 0, 255),
-                                     (x * cell_size, y * cell_size, cell_size, cell_size))
+                    pygame.draw.rect(
+                        screen, (0, 0, 255),
+                        (x * cell_size, y * cell_size,
+                         cell_size, cell_size)
+                    )
 
                 for g in game.board.green_apples:
                     x, y = g.position
-                    pygame.draw.rect(screen, g.color,
-                                     (x * cell_size, y * cell_size, cell_size, cell_size))
+                    pygame.draw.rect(
+                        screen, g.color,
+                        (x * cell_size, y * cell_size,
+                         cell_size, cell_size)
+                    )
 
                 r = game.board.red_apple
                 x, y = r.position
-                pygame.draw.rect(screen, r.color,
-                                 (x * cell_size, y * cell_size, cell_size, cell_size))
+                pygame.draw.rect(
+                    screen, r.color,
+                    (x * cell_size, y * cell_size,
+                     cell_size, cell_size)
+                )
 
                 pygame.display.flip()
                 clock.tick(10)
@@ -150,18 +171,17 @@ def main():
             epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
         if episode % 100 == 0:
-            print(f"Episode {episode} | reward={total_reward:.1f} | steps={steps} | len={len(game.snake.segments)}")
+            avg_len = len(game.snake.segments)
+            print(f"Episode {episode} | reward={total_reward:.1f} | "
+                  f"steps={steps} | len={avg_len}")
 
         if args.save and episode in [1, 10, 100, 1000, 5000]:
-    
-            # Si args.save finit par .txt → fichier direct
+
             if args.save.endswith(".txt"):
                 folder = os.path.dirname(args.save)
                 if folder:
                     os.makedirs(folder, exist_ok=True)
                 path = args.save
-
-            # Sinon → dossier
             else:
                 os.makedirs(args.save, exist_ok=True)
                 path = os.path.join(args.save, f"{episode}sess.txt")
@@ -175,11 +195,13 @@ def main():
     print(f"max length = {max_length}, max duration = {max_duration}")
 
     if total_rewards:
-        print(f"Score moyen : {sum(total_rewards)/len(total_rewards):.1f}")
+        avg_reward = sum(total_rewards) / len(total_rewards)
+        print(f"Score moyen : {avg_reward:.1f}")
         print(f"Score max   : {max(total_rewards):.1f}")
         print(f"Score min   : {min(total_rewards):.1f}")
 
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()

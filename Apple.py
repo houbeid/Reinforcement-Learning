@@ -9,4 +9,6 @@ class Apple:
         )
 
     def respawn(self, snake_segments, other_apples=[]):
-        self.position = self.board.random_empty_cell(snake_segments, other_apples)
+        self.position = self.board.random_empty_cell(
+            snake_segments, other_apples
+        )

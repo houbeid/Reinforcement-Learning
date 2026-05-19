@@ -9,8 +9,15 @@ class Game:
         self._init_game()
 
     def _init_game(self):
-        self.snake = Snake(start_pos=(self.board_size // 2, self.board_size // 2), initial_length=3)
-        self.board = Board(width=self.board_size, height=self.board_size, snake=self.snake)
+        self.snake = Snake(
+            start_pos=(self.board_size // 2, self.board_size // 2),
+            initial_length=3
+        )
+        self.board = Board(
+            width=self.board_size,
+            height=self.board_size,
+            snake=self.snake
+        )
 
         green1 = Apple(self.board)
         green2 = Apple(self.board, other_positions=[green1.position])
@@ -21,34 +28,35 @@ class Game:
             other_positions=[green1.position, green2.position]
         )
 
-        self.prev_distance     = None
+        self.prev_distance = None
         self.visited_positions = []
-        self.loop_penalty      = 0
+        self.loop_penalty = 0
 
     def reset(self):
         """Réinitialise le jeu pour un nouvel épisode."""
         self._init_game()
 
     def calculate_reward(self):
-        head            = self.snake.head_position()
+        head = self.snake.head_position()
         green_positions = [g.position for g in self.board.green_apples]
-        red_position    = self.board.red_apple.position
+        red_position = self.board.red_apple.position
 
         if green_positions:
             closest_green = min(
                 green_positions,
                 key=lambda g: abs(g[0] - head[0]) + abs(g[1] - head[1])
             )
-            dist_after = abs(closest_green[0] - head[0]) + abs(closest_green[1] - head[1])
+            dist_after = (abs(closest_green[0] - head[0]) +
+                          abs(closest_green[1] - head[1]))
         else:
             dist_after = None
 
-        dist_before        = self.prev_distance
+        dist_before = self.prev_distance
         self.prev_distance = dist_after
 
         if head in green_positions:
             self.visited_positions = []
-            self.loop_penalty      = 0
+            self.loop_penalty = 0
             reward = 10
 
         elif head == red_position:
@@ -76,8 +84,10 @@ class Game:
             self.snake.update_direction(action_direction)
 
         self.snake.move()
+
         if self.snake.head_collision(self.board):
             return self.snake.get_state(self.board), -10, True
+
         for green in self.board.green_apples:
             if self.snake.head_position() == green.position:
                 self.snake.grow()
@@ -86,6 +96,7 @@ class Game:
                     + [self.board.red_apple.position]
                 )
                 green.respawn(self.snake.segments, other_apples=other)
+
         if self.snake.head_position() == self.board.red_apple.position:
             if len(self.snake.segments) > 1:
                 self.snake.shrink()
@@ -97,8 +108,8 @@ class Game:
             )
 
         reward = self.calculate_reward()
-        state  = self.snake.get_state(self.board)
-        done   = False
+        state = self.snake.get_state(self.board)
+        done = False
 
         return state, reward, done
 

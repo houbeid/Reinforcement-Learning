@@ -1,5 +1,6 @@
 import random
 
+
 class Board:
     def __init__(self, width=10, height=10, snake=None):
         self.width = width
